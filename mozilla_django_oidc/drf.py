@@ -20,12 +20,13 @@ class OIDCAuthentication(authentication.BaseAuthentication):
 
     def authenticate(self, request):
         """
-        Authenticate the request and return a tuple of (user, token).
+        Authenticate the request and return a tuple of (user, token) or None
+        if there was no authentication attempt.
         """
         access_token = self.get_access_token(request)
 
         if not access_token:
-            return (None, None)
+            return None
 
         try:
             user = self.backend.get_or_create_user(access_token, None, None)
@@ -46,7 +47,7 @@ class OIDCAuthentication(authentication.BaseAuthentication):
             raise exceptions.AuthenticationFailed(msg)
 
         if not user:
-            return (None, None)
+            return None
 
         return user, access_token
 
