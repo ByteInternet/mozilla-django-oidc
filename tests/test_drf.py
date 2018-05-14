@@ -21,12 +21,12 @@ class TestDRF(TestCase):
             ret = self.auth.authenticate(self.request)
         self.assertEqual(ret, None)
 
-    def test_authenticate_returns_none_if_backend_returns_no_user(self):
+    def test_authenticate_raises_authenticationfailed_if_backend_returns_no_user(self):
         self.auth.backend.get_or_create_user.return_value = None
-        ret = self.auth.authenticate(self.request)
-        self.assertEqual(ret, None)
+        with self.assertRaises(exceptions.AuthenticationFailed):
+            self.auth.authenticate(self.request)
 
-    def test_authenticate_throws_authenticationfailed_on_suspiciousoperation(self):
+    def test_authenticate_raises_authenticationfailed_on_suspiciousoperation(self):
         self.auth.backend.get_or_create_user.side_effect = SuspiciousOperation
         with self.assertRaises(exceptions.AuthenticationFailed):
             self.auth.authenticate(self.request)

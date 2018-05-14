@@ -273,7 +273,7 @@ class OIDCAuthenticationBackend(ModelBackend):
 
         claims_verified = self.verify_claims(user_info)
         if not claims_verified:
-            msg = 'Login failed: Claims verification for %s failed.' % email
+            msg = 'Claims verification for %s failed.' % email
             raise SuspiciousOperation(msg)
 
         # email based filtering

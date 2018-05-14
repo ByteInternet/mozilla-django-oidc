@@ -43,11 +43,12 @@ class OIDCAuthentication(authentication.BaseAuthentication):
             # for all other http errors, just re-raise the exception.
             raise
         except SuspiciousOperation as exc:
-            msg = 'Failed retrieving user from the OpenID backend: %s' % exc
-            raise exceptions.AuthenticationFailed(msg)
+            # trust that the message in the exception is presentable to the user
+            raise exceptions.AuthenticationFailed('Login failed: %s' % exc)
 
         if not user:
-            return None
+            raise exceptions.AuthenticationFailed('Login failed: No user found '
+                                                  'for the given access token.')
 
         return user, access_token
 
