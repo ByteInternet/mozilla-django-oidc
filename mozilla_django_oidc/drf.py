@@ -38,7 +38,7 @@ class OIDCAuthentication(authentication.BaseAuthentication):
             # we can get from the www-authentication header) in the response.
             if resp.status_code == 401 and 'www-authenticate' in resp.headers:
                 data = parse_www_authenticate_header(resp.headers['www-authenticate'])
-                raise exceptions.AuthenticationFailed(data)
+                raise exceptions.AuthenticationFailed(data['error_description'])
 
             # for all other http errors, just re-raise the exception.
             raise
