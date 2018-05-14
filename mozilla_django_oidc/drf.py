@@ -4,8 +4,10 @@ Classes/functions for integrating with Django REST Framework.
 
 from django.core.exceptions import SuspiciousOperation
 from rest_framework import authentication, exceptions
+from requests.exceptions import HTTPError
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+from mozilla_django_oidc.utils import parse_www_authenticate_header
 
 
 class OIDCAuthentication(authentication.BaseAuthentication):
@@ -27,6 +29,18 @@ class OIDCAuthentication(authentication.BaseAuthentication):
 
         try:
             user = self.backend.get_or_create_user(access_token, None, None)
+        except HTTPError as exc:
+            resp = exc.response
+
+            # if the oidc provider returns 401, it means the token is invalid.
+            # in that case, we want to return the upstream error message (which
+            # we can get from the www-authentication header) in the response.
+            if resp.status_code == 401 and 'www-authenticate' in resp.headers:
+                data = parse_www_authenticate_header(resp.headers['www-authenticate'])
+                raise exceptions.AuthenticationFailed(data)
+
+            # for all other http errors, just re-raise the exception.
+            raise
         except SuspiciousOperation as exc:
             msg = 'Failed retrieving user from the OpenID backend: %s' % exc
             raise exceptions.AuthenticationFailed(msg)
