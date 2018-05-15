@@ -2,12 +2,29 @@
 Classes/functions for integrating with Django REST Framework.
 """
 
-from django.core.exceptions import SuspiciousOperation
+from django.contrib.auth import get_backends
+from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from rest_framework import authentication, exceptions
 from requests.exceptions import HTTPError
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from mozilla_django_oidc.utils import parse_www_authenticate_header
+
+
+def guess_oidc_backend():
+    """
+    Look through AUTH_BACKENDS to find one that is or extends the mozilla
+    OIDC backend class.
+    """
+    backends = [
+        backend for backend in get_backends()
+        if isinstance(backend, OIDCAuthenticationBackend)
+    ]
+    if not backends:
+        raise ImproperlyConfigured('no backends extending OIDCAuthenticationBackend found!')
+    if len(backends) > 1:
+        raise ImproperlyConfigured('more than one OIDCAuthenticationBackend found!')
+    return backends[0]
 
 
 class OIDCAuthentication(authentication.BaseAuthentication):
@@ -16,7 +33,7 @@ class OIDCAuthentication(authentication.BaseAuthentication):
     """
 
     def __init__(self, backend=None):
-        self.backend = backend or OIDCAuthenticationBackend()
+        self.backend = backend or guess_oidc_backend()
 
     def authenticate(self, request):
         """
