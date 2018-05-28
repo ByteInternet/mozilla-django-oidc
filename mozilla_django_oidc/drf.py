@@ -32,6 +32,8 @@ class OIDCAuthentication(authentication.BaseAuthentication):
     Provide OpenID authentication for DRF.
     """
 
+    www_authenticate_realm = 'api'
+
     def __init__(self, backend=None):
         self.backend = backend or guess_oidc_backend()
 
@@ -96,6 +98,7 @@ class OIDCAuthentication(authentication.BaseAuthentication):
 
     def authenticate_header(self, request):
         """
-        Returning None here makes DRF send a 403 instead of 401.
+        Return a string used for the WWW-Authenticate header
+        when authorization fails.
         """
-        return None
+        return 'Bearer realm="%s"' % self.www_authenticate_realm
